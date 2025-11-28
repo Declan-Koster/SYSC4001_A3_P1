@@ -17,6 +17,29 @@ void FCFS(std::vector<PCB> &ready_queue) {
             );
 }
 
+//sorts the PID
+void priority_sort_first(std::vector<PCB> &queue) {
+    std::sort( 
+                queue.begin(), queue.end(), 
+                []( const PCB &first, const PCB &second ){
+                    return (first.PID < second.PID);
+                }
+            );
+    
+}
+
+//sorts the PID in reverse
+void priority_sort_last(std::vector<PCB> &queue) {
+    std::sort( 
+                queue.begin(), queue.end(), 
+                []( const PCB &first, const PCB &second ){
+                    return (first.PID > second.PID);
+                }
+            );
+    
+}
+
+
 std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std::vector<PCB> list_processes) {
 
     std::vector<PCB> ready_queue;   //The ready queue of processes
@@ -29,6 +52,10 @@ std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std
     unsigned int current_time = 0;
     PCB running;
 
+    // Printing initial PCB's passed in
+    std::cout << "Initial Process Control Blocks:\n";
+    std::cout << print_PCB(list_processes) << std::endl;
+
     //Initialize an empty running process
     idle_CPU(running);
 
@@ -37,39 +64,116 @@ std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std
     //make the output table (the header row)
     execution_status = print_exec_header();
 
+    //Sorting processes by PID 
+    priority_sort_first(list_processes);
+
     //Loop while till there are no ready or waiting processes.
     //This is the main reason I have job_list, you don't have to use it.
     while(!all_process_terminated(job_list) || job_list.empty()) {
 
-        //Inside this loop, there are three things you must do:
-        // 1) Populate the ready queue with processes as they arrive
-        // 2) Manage the wait queue
-        // 3) Schedule processes from the ready queue
-
         //Population of ready queue is given to you as an example.
         //Go through the list of proceeses
         for(auto &process : list_processes) {
-            if(process.arrival_time == current_time) {//check if the AT = current time
-                //if so, assign memory and put the process into the ready queue
-                assign_memory(process);
+            if(process.arrival_time <= current_time && process.state == NOT_ASSIGNED) {
+                //update the state to a new state because it has entered the queue
+                process.state = NEW;
+                
+                if(assign_memory(process)) {
 
-                process.state = READY;  //Set the process state to READY
-                ready_queue.push_back(process); //Add the process to the ready queue
+                    process.state = READY;  //Set the process state to READY
+                    ready_queue.push_back(process); //Add the process to the ready queue
+
+                    execution_status += print_exec_status(current_time, process.PID, NEW, READY);
+                }
                 job_list.push_back(process); //Add it to the list of processes
+                
+            } else if(process.arrival_time <= current_time && process.state == NEW) {
+                //try to assign NEW state memeory
+                if(assign_memory(process)) {
+                    process.state = READY;  //Set the process state to READY
+                    ready_queue.push_back(process); //Add the process to the ready queue
+                    sync_queue(job_list,process); // updates the process in job list
+                    execution_status += print_exec_status(current_time, process.PID, NEW, READY);
 
-                execution_status += print_exec_status(current_time, process.PID, NEW, READY);
+                }
             }
         }
 
+
+        //========================DEBUG PRINTS============================//
+        // debug prints
+        std::cout << "current Time:" << current_time << std::endl;
+        //std::cout << "list_processes:\n";
+        //std::cout << print_PCB(list_processes) << std::endl;
+        //std::cout << "ready_queue:\n";
+        //std::cout << print_PCB(ready_queue) << std::endl;
+        std::cout << "wait_queue:\n";
+        std::cout << print_PCB(wait_queue) << std::endl;
+        std::cout << "job_list:\n";
+        std::cout << print_PCB(job_list) << std::endl;
+        //=====================END DEBUG PRINTS============================//
+
+
         ///////////////////////MANAGE WAIT QUEUE/////////////////////////
         //This mainly involves keeping track of how long a process must remain in the ready queue
+       
+        
+        
+        for (auto iter = wait_queue.begin(); iter != wait_queue.end(); ) {
+            iter->io_remaining--;
+            if(iter->io_remaining < 1) {
+                //change the state thats has no more time to wait to READY
+                iter->state = READY;
+                ready_queue.push_back(*iter);
+                sync_queue(job_list,*iter);
+                execution_status += print_exec_status(current_time, iter->PID, WAITING, READY);
 
+                //Erase the state from the wait queue after you do everything you need to with it.
+                iter = wait_queue.erase(iter);
+            } else {
+                ++iter;
+            }
+        }
+
+        
         /////////////////////////////////////////////////////////////////
 
         //////////////////////////SCHEDULER//////////////////////////////
-        FCFS(ready_queue); //example of FCFS is shown here
-        /////////////////////////////////////////////////////////////////
+        
 
+        if(running.state == RUNNING) {
+            running.remaining_time--;
+            if(running.remaining_time == 0){
+                //set a process that has no more time left to TERMINATED
+                terminate_process(running,job_list);
+                execution_status += print_exec_status(current_time, running.PID, RUNNING, TERMINATED);
+                idle_CPU(running);
+            }
+            
+            //if the time passed % I/O Frequency, then you know that an I/O occurs
+            if(running.io_freq > 0 && (running.processing_time - running.remaining_time) > 0 && ((running.processing_time -running.remaining_time) % running.io_freq) == 0) {
+        
+                //change current program to the WAITING and add it to the wait_queue    
+                running.state = WAITING;
+                running.io_remaining = running.io_duration;
+                wait_queue.push_back(running);
+                sync_queue(job_list,running);
+                execution_status += print_exec_status(current_time, running.PID, RUNNING, WAITING);
+                idle_CPU(running);
+            }
+        } 
+
+        if(running.state == NOT_ASSIGNED && !ready_queue.empty()) {
+
+            //get the item that has the smalles PID and set that as running
+            priority_sort_last(ready_queue);
+            run_process(running,job_list,ready_queue,current_time);
+            execution_status += print_exec_status(current_time, running.PID, READY, RUNNING);
+        }
+
+
+        /////////////////////////////////////////////////////////////////
+        current_time++;
     }
     
     //Close the output table
@@ -103,15 +207,19 @@ int main(int argc, char** argv) {
     //To do so, the add_process() helper function is used (see include file).
     std::string line;
     std::vector<PCB> list_process;
+
     while(std::getline(input_file, line)) {
         auto input_tokens = split_delim(line, ", ");
         auto new_process = add_process(input_tokens);
         list_process.push_back(new_process);
     }
     input_file.close();
+    
 
+    std::cout << "executing file\n";
     //With the list of processes, run the simulation
     auto [exec] = run_simulation(list_process);
+    std::cout << "file finished executing\n";
 
     write_output(exec, "execution.txt");
 
