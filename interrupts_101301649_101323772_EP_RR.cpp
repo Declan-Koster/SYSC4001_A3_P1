@@ -32,6 +32,7 @@ void priority_sort_last(std::vector<PCB> &queue) {
 
 std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std::vector<PCB> list_processes) {
 
+
     std::vector<PCB> ready_queue;   //The ready queue of processes
     std::vector<PCB> wait_queue;    //The wait queue of processes
     std::vector<PCB> job_list;      //A list to keep track of all the processes. This is similar
@@ -92,15 +93,15 @@ std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std
 
         //========================DEBUG PRINTS============================//
         // debug prints
-        std::cout << "current Time:" << current_time << std::endl;
+        //std::cout << "current Time:" << current_time << std::endl;
         //std::cout << "list_processes:\n";
         //std::cout << print_PCB(list_processes) << std::endl;
         //std::cout << "ready_queue:\n";
         //std::cout << print_PCB(ready_queue) << std::endl;
-        std::cout << "wait_queue:\n";
-        std::cout << print_PCB(wait_queue) << std::endl;
-        std::cout << "job_list:\n";
-        std::cout << print_PCB(job_list) << std::endl;
+        //std::cout << "wait_queue:\n";
+        //std::cout << print_PCB(wait_queue) << std::endl;
+        //std::cout << "job_list:\n";
+        //std::cout << print_PCB(job_list) << std::endl;
         //=====================END DEBUG PRINTS============================//
 
 
@@ -134,6 +135,8 @@ std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std
 
             // check if the process is finished so you reset
             if(running.remaining_time == 0){
+
+                running.completion_time = current_time;
                 //set a process that has no more time left to TERMINATED
                 terminate_process(running,job_list);
                 execution_status += print_exec_status(current_time, running.PID, RUNNING, TERMINATED);
@@ -188,18 +191,69 @@ std::tuple<std::string /* add std::string for bonus mark */ > run_simulation(std
 
             //get the item that has the smalles PID and set that as running
             priority_sort_last(ready_queue);
-            run_process(running,job_list,ready_queue,current_time);
-            execution_status += print_exec_status(current_time, running.PID, READY, RUNNING);
-            quantum_remaining = TIME_QUANT;
+
+            running = ready_queue.back();
+            ready_queue.pop_back();
+            
+            //run_process(running,job_list,ready_queue,current_time);
+
+            if(running.start_time == -1) {
+                running.start_time = current_time;
+                std::cout << "PID " << running.PID << " start_time set to " << running.start_time << std::endl;
+                sync_queue(job_list,running);
+            }
+            
+        }
+
+        for(auto &process : ready_queue) {
+            if(process.state == READY) {
+                process.wait_time++;
+                sync_queue(job_list,process);
+            }
         }
 
         /////////////////////////////////////////////////////////////////
 
         current_time++;
     }
+
+    for (auto &p : job_list) {
+    std::cout << "PID " << p.PID 
+              << " start_time=" << p.start_time 
+              << " arrival_time=" << p.arrival_time << std::endl;
+}
     
     //Close the output table
     execution_status += print_exec_footer();
+
+    double total_TAT = 0;
+    double total_WT = 0;
+    double total_RT = 0;
+    int completed_processes = 0;
+
+    for (const auto &p : job_list) {
+        if(p.completion_time != -1) {
+            int TAT = p.completion_time - p.arrival_time;
+            int RT = p.start_time - p.arrival_time;
+
+            total_TAT += TAT;
+            total_WT += p.wait_time;
+            total_RT += RT;
+            completed_processes++;
+        }
+    }
+
+    double avg_TAT = total_TAT / completed_processes;
+    double avg_WT = total_WT / completed_processes;
+    double avg_RT = total_RT / completed_processes;
+    double throughput = static_cast<double>(completed_processes) / (current_time-1);
+
+    std::cout << "\n==== Simulation Metrics ====\n";
+    std::cout << "total processes: " << completed_processes << std::endl;
+    std::cout << "Throughput: " << throughput << " processes/unit time" << std::endl;
+    std::cout << "Average Turnaround Time: " << avg_TAT << std::endl;
+    std::cout << "Average Waiting Time: " << avg_WT << std::endl;
+    std::cout << "Average Response Time: " << avg_RT << std::endl;
 
     return std::make_tuple(execution_status);
 }

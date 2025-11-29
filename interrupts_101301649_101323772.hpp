@@ -67,6 +67,9 @@ struct PCB{
     unsigned int    io_duration;
 
     unsigned int    io_remaining;
+
+    int             completion_time;
+    int             wait_time = 0;
 };
 
 //------------------------------------HELPER FUNCTIONS FOR THE SIMULATOR------------------------------
@@ -305,7 +308,7 @@ void run_process(PCB &running, std::vector<PCB> &job_queue, std::vector<PCB> &re
 }
 
 void idle_CPU(PCB &running) {
-    running.start_time = 0;
+    running.start_time = -1;
     running.processing_time = 0;
     running.remaining_time = 0;
     running.arrival_time = 0;
