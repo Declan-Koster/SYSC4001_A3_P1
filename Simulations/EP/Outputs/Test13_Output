@@ -5,14 +5,8 @@
 |                 5 |  1 |     READY |   RUNNING |
 |                30 |  6 |       NEW |     READY |
 |                35 |  8 |       NEW |     READY |
-|               105 |  1 |   RUNNING |     READY |
-|               105 |  1 |     READY |   RUNNING |
-|               205 |  1 |   RUNNING |     READY |
-|               205 |  1 |     READY |   RUNNING |
 |               225 |  1 |   RUNNING |TERMINATED |
 |               225 |  6 |     READY |   RUNNING |
-|               325 |  6 |   RUNNING |     READY |
-|               325 |  6 |     READY |   RUNNING |
 |               345 |  6 |   RUNNING |TERMINATED |
 |               345 |  8 |     READY |   RUNNING |
 |               395 |  8 |   RUNNING |   WAITING |
