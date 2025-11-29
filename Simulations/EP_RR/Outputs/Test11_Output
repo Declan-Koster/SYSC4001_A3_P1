@@ -1,0 +1,45 @@
++------------------------------------------------+
+|Time of Transition |PID | Old State | New State |
++------------------------------------------------+
+|                18 |  5 |       NEW |     READY |
+|                18 |  5 |     READY |   RUNNING |
+|                20 |  7 |       NEW |     READY |
+|                68 |  5 |   RUNNING |   WAITING |
+|                68 |  7 |     READY |   RUNNING |
+|                78 |  7 |   RUNNING |   WAITING |
+|                83 |  7 |   WAITING |     READY |
+|                83 |  7 |     READY |   RUNNING |
+|                88 |  5 |   WAITING |     READY |
+|                88 |  7 |   RUNNING |     READY |
+|                88 |  5 |     READY |   RUNNING |
+|               138 |  5 |   RUNNING |   WAITING |
+|               138 |  7 |     READY |   RUNNING |
+|               143 |  7 |   RUNNING |   WAITING |
+|               148 |  7 |   WAITING |     READY |
+|               148 |  7 |     READY |   RUNNING |
+|               158 |  5 |   WAITING |     READY |
+|               158 |  7 |   RUNNING |     READY |
+|               158 |  5 |     READY |   RUNNING |
+|               208 |  5 |   RUNNING |   WAITING |
+|               208 |  7 |     READY |   RUNNING |
+|               218 |  7 |   RUNNING |   WAITING |
+|               223 |  7 |   WAITING |     READY |
+|               223 |  7 |     READY |   RUNNING |
+|               228 |  5 |   WAITING |     READY |
+|               228 |  7 |   RUNNING |     READY |
+|               228 |  5 |     READY |   RUNNING |
+|               278 |  5 |   RUNNING |   WAITING |
+|               278 |  7 |     READY |   RUNNING |
+|               283 |  7 |   RUNNING |   WAITING |
+|               288 |  7 |   WAITING |     READY |
+|               288 |  7 |     READY |   RUNNING |
+|               298 |  5 |   WAITING |     READY |
+|               298 |  7 |   RUNNING |     READY |
+|               298 |  5 |     READY |   RUNNING |
+|               348 |  5 |   RUNNING |TERMINATED |
+|               348 |  7 |     READY |   RUNNING |
+|               358 |  7 |   RUNNING |   WAITING |
+|               363 |  7 |   WAITING |     READY |
+|               363 |  7 |     READY |   RUNNING |
+|               373 |  7 |   RUNNING |TERMINATED |
++------------------------------------------------+
